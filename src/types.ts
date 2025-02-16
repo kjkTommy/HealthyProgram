@@ -29,7 +29,12 @@ export interface ProfileModalProps {
     onSave: () => void
 }
 export interface ModalHabitsProps
-    extends Omit<ProfileModalProps, 'textValue' | 'setTextValue' | 'onSave'> {}
+    extends Omit<ProfileModalProps, 'textValue' | 'setTextValue'> {
+    habitName: string
+    date: Date
+    setDate: (date: Date) => void
+    setHabitName: (text: string) => void
+}
 
 export enum ProfileFields {
     Name = 'name',

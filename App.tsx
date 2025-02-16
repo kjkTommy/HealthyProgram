@@ -6,7 +6,9 @@ const Stack = createStackNavigator()
 const AppContainer = () => {
     return (
         <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+            <Stack.Navigator
+                screenOptions={{ headerShown: false, animation: 'fade' }}
+            >
                 <Stack.Screen name="Main" component={MainPage} />
             </Stack.Navigator>
         </NavigationContainer>

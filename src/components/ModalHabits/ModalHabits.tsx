@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, ChangeEventHandler } from 'react'
 import {
     Modal,
     StyleSheet,
@@ -10,21 +10,50 @@ import {
 } from 'react-native'
 import { ModalHabitsProps } from '../../types'
 import AntDesign from '@expo/vector-icons/AntDesign'
+import RNDateTimePicker, {
+    DateTimePickerEvent,
+} from '@react-native-community/datetimepicker'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
-const ModalHabits = ({ open, setOpen }: ModalHabitsProps) => {
-    const [date, setDate] = useState(new Date())
+const STORAGE_KEY_HABIT = 'HABIT_NAME'
+const STORAGE_KEY_DATE = 'HABIT_DATE'
+
+const ModalHabits = ({
+    date,
+    setDate,
+    open,
+    setOpen,
+    habitName,
+    setHabitName,
+    onSave,
+}: ModalHabitsProps) => {
     const [datePickerOpen, setDatePickerOpen] = useState(false)
-    const [habitName, setHabitName] = useState<string>('')
 
-    const handleDateChange = (newDate: Date) => {
-        setDate(newDate)
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const savedHabit = await AsyncStorage.getItem(STORAGE_KEY_HABIT)
+                const savedDate = await AsyncStorage.getItem(STORAGE_KEY_DATE)
+
+                if (savedHabit) setHabitName(JSON.parse(savedHabit))
+                if (savedDate) setDate(new Date(JSON.parse(savedDate)))
+            } catch (error) {
+                console.error('Ошибка загрузки данных:', error)
+            }
+        }
+        loadData()
+    }, [])
+
+    const handleDateChange = (event: DateTimePickerEvent, newDate?: Date) => {
+        if (event.type === 'set' && newDate) {
+            setDate(newDate)
+        }
         setDatePickerOpen(false)
     }
 
     const handleInputChange = (text: string) => {
         setHabitName(text)
     }
-
     return (
         <Modal
             animationType="fade"
@@ -38,7 +67,11 @@ const ModalHabits = ({ open, setOpen }: ModalHabitsProps) => {
                         <View style={styles.headerModal}>
                             <Text style={styles.modalText}>Выберите цель</Text>
                             <TouchableOpacity onPress={() => setOpen(false)}>
-                                <AntDesign name="close" size={28} color="black" />
+                                <AntDesign
+                                    name="close"
+                                    size={28}
+                                    color="black"
+                                />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.habitContainer}>
@@ -47,12 +80,23 @@ const ModalHabits = ({ open, setOpen }: ModalHabitsProps) => {
                                 placeholderTextColor="#A5A7A8"
                                 value={habitName}
                                 onChangeText={handleInputChange}
+                                style={styles.inputTextHabit}
                             />
-                            <TouchableOpacity onPress={() => setDatePickerOpen(true)}>
-                                <Text style={styles.inputText}>{date.toLocaleDateString()}</Text>
-                            </TouchableOpacity>
-                           
+                            <RNDateTimePicker
+                                value={date}
+                                mode="date"
+                                display="default"
+                                accentColor="#FA3E6E"
+                                themeVariant="light"
+                                locale="ru-RU"
+                                design="material"
+                                title="Выберите время"
+                                onChange={handleDateChange}
+                            />
                         </View>
+                        <TouchableOpacity onPress={onSave}>
+                            <Text style={styles.buttonSave}>Сохранить</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
             </TouchableWithoutFeedback>
@@ -61,7 +105,27 @@ const ModalHabits = ({ open, setOpen }: ModalHabitsProps) => {
 }
 
 const styles = StyleSheet.create({
-    habitContainer: {},
+    habitContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    inputTextHabit: {
+        flexWrap: 'wrap',
+        width: 200,
+        fontSize: 16,
+        paddingVertical: 8,
+        paddingLeft: 12,
+        marginVertical: 8,
+        backgroundColor: 'white',
+        shadowOpacity: 0.08,
+        borderRadius: 12,
+        elevation: 5,
+        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 10,
+    },
     buttonSave: {
         fontSize: 20,
         color: '#FFFFFF',
@@ -75,6 +139,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 10,
+        marginTop: 20,
     },
     headerModal: {
         width: '100%',
