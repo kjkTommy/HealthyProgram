@@ -6,6 +6,7 @@ import { DayOfTheWeekProps } from '../../types'
 import ProgressBar from '../ProgressBar/ProgressBar'
 import ModalHabits from '../ModalHabits/ModalHabits'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { conversionDateToNumber } from '../../utils/conversionDateToNumber'
 
 const STORAGE_KEY = 'HABIT_NAME'
 const STORAGE_KEY_DATE = 'HABIT_DATE'
@@ -25,6 +26,13 @@ const HabitsTracker = () => {
     const [date, setDate] = useState<Date>(new Date())
     const [weekDays, setWeekDays] = useState(daysOfTheWeek)
     const [open, setOpen] = useState(false)
+
+    function counterCompleteDay(days: DayOfTheWeekProps[]) {
+        return days.filter((day) => day.isCompleted).length
+    }
+
+    const completedDays = counterCompleteDay(weekDays)
+    const totalDate = conversionDateToNumber(date)
 
     useEffect(() => {
         const loadData = async () => {
@@ -48,8 +56,6 @@ const HabitsTracker = () => {
                 [STORAGE_KEY, JSON.stringify(habitName)],
                 [STORAGE_KEY_DATE, JSON.stringify(date)],
             ])
-
-            console.log(`Название цели: ${habitName}, Дата: ${date}`)
             setOpen(false)
         } catch (error) {
             console.error('Ошибка сохранения данных:', error)
@@ -69,7 +75,10 @@ const HabitsTracker = () => {
             <TouchableWithoutFeedback onPress={() => setOpen(true)}>
                 <View style={styles.containerHabit}>
                     <FontAwesome5 name="plus" size={40} color="white" />
-                    <Text style={{ color: '#FFFFFF' }}>привычек нет</Text>
+                    <Text style={{ color: '#FFFFFF', fontSize: 10 }}>
+                        выполнено {completedDays}
+                        максимум {totalDate}
+                    </Text>
                     <ModalHabits
                         date={date}
                         setDate={setDate}
@@ -83,7 +92,10 @@ const HabitsTracker = () => {
             </TouchableWithoutFeedback>
             <View style={styles.containerColumn}>
                 <View style={styles.statusHabit}>
-                    <ProgressBar progress={100} />
+                    <ProgressBar
+                        totalDate={totalDate}
+                        completedDays={completedDays}
+                    />
                 </View>
                 <View style={styles.weekDaysContainer}>
                     {weekDays.map((day) => (

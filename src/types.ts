@@ -47,5 +47,6 @@ export interface DayOfTheWeekProps {
     isCompleted: boolean
 }
 export interface ProgressBarProps {
-    progress: number
+    totalDate: number
+    completedDays: number
 }

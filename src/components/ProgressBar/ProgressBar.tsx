@@ -8,13 +8,17 @@ import Animated, {
 } from 'react-native-reanimated'
 import { ProgressBarProps } from '../../types'
 
-const ProgressBar = ({ progress }: ProgressBarProps) => {
+const ProgressBar = ({ totalDate, completedDays }: ProgressBarProps) => {
     const [maxWidth, setMaxWidth] = useState(0)
     const width = useSharedValue(0)
 
+    // Вычисляем прогресс в процентах
+    const progress = (completedDays / totalDate) * 100
+
     useEffect(() => {
         if (maxWidth > 0) {
-            const normalizedProgress = (Math.min(progress, 100) / 100) * maxWidth
+            const normalizedProgress =
+                (Math.min(progress, 100) / 100) * maxWidth
             width.value = withTiming(normalizedProgress, {
                 duration: 500,
                 easing: Easing.linear,
@@ -30,7 +34,7 @@ const ProgressBar = ({ progress }: ProgressBarProps) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Прогресс: {((progress / 100) * 100).toFixed(1)}%</Text>
+            <Text style={styles.text}>Прогресс: {progress.toFixed(1)}%</Text>
             <View
                 style={styles.backgroundBar}
                 onLayout={(event: LayoutChangeEvent) => {
