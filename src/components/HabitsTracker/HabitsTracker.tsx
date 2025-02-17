@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { StyleSheet, Text, View, TouchableWithoutFeedback } from 'react-native'
+import {
+    StyleSheet,
+    Text,
+    View,
+    TouchableWithoutFeedback,
+    FlatList,
+} from 'react-native'
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { ScrollView } from 'react-native-gesture-handler'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { updateDaysArray } from '../../utils/updateDaysArray'
 import ProgressBar from '../ProgressBar/ProgressBar'
@@ -97,53 +102,35 @@ const HabitsTracker = () => {
                         {completedDays} / из {totalDate} дней
                     </Text>
                 </View>
-                <ScrollView horizontal={true} style={styles.scrollViewWeek}>
-                    <View style={styles.weekDaysContainer}>
-                        {weekDays.map((weekDayArray, weekIndex) => (
-                            <View
-                                key={weekIndex}
-                                style={styles.weekDaysChecker}
-                            >
-                                {weekDayArray.map((day) => (
-                                    <TouchableWithoutFeedback
-                                        key={day.id}
-                                        onPress={() =>
-                                            handleChangeStatus(day.id)
-                                        }
-                                    >
-                                        <View>
-                                            <Ionicons
-                                                name="checkmark-circle"
-                                                size={26}
-                                                color={
-                                                    day.isCompleted
-                                                        ? '#FA3E6E'
-                                                        : '#000000'
-                                                }
-                                            />
-                                            <Text
-                                                style={{
-                                                    color: '#FFFFFF',
-                                                    fontSize: 14,
-                                                    marginTop: 2,
-                                                }}
-                                            >
-                                                {day.name}
-                                            </Text>
-                                        </View>
-                                    </TouchableWithoutFeedback>
-                                ))}
+                <FlatList
+                    data={weekDays.flat()}
+                    horizontal
+                    keyExtractor={(item) => item.id.toString()}
+                    style={styles.flatListWeek}
+                    renderItem={({ item }) => (
+                        <TouchableWithoutFeedback
+                            onPress={() => handleChangeStatus(item.id)}
+                        >
+                            <View style={styles.dayItem}>
+                                <Ionicons
+                                    name="checkmark-circle"
+                                    size={26}
+                                    color={
+                                        item.isCompleted ? '#FA3E6E' : '#000000'
+                                    }
+                                />
+                                <Text style={styles.dayText}>{item.name}</Text>
                             </View>
-                        ))}
-                    </View>
-                </ScrollView>
+                        </TouchableWithoutFeedback>
+                    )}
+                />
             </View>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
-    scrollViewWeek: {
+    flatListWeek: {
         width: 240,
     },
     habitNameText: {
@@ -158,15 +145,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         paddingLeft: 2,
     },
-    weekDaysChecker: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
     mainContainer: {
         width: '94%',
-        display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
         backgroundColor: '#000000',
@@ -178,28 +158,23 @@ const styles = StyleSheet.create({
     containerHabit: {
         width: '32%',
         backgroundColor: '#171414',
-        display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         paddingVertical: 22,
         justifyContent: 'space-around',
         borderRadius: 12,
     },
     containerColumn: {
-        display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
     },
-    weekDaysContainer: {
-        width: '100%',
-        backgroundColor: '#171414',
-        paddingVertical: 6,
-        paddingHorizontal: 6,
-        borderRadius: 12,
-        display: 'flex',
-        flexDirection: 'row',
-        gap: 8,
+    dayItem: {
+        alignItems: 'center',
+        marginHorizontal: 4,
+    },
+    dayText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        marginTop: 2,
     },
 })
-
 export default HabitsTracker
