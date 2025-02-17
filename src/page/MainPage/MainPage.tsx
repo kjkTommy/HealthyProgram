@@ -11,7 +11,11 @@ const STORAGE_KEY = 'USER_PROFILE'
 
 const MainPage = () => {
     const [open, setOpen] = useState(false)
-    const [textValue, setTextValue] = useState({ name: '', weight: '', size: '' })
+    const [textValue, setTextValue] = useState({
+        name: '',
+        weight: '',
+        size: '',
+    })
 
     useEffect(() => {
         const loadData = async () => {
@@ -29,7 +33,9 @@ const MainPage = () => {
         try {
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(textValue))
             setOpen(false)
-            console.log(`Имя: ${textValue.name}, Вес: ${textValue.weight}, Рост: ${textValue.size}`)
+            console.log(
+                `Имя: ${textValue.name}, Вес: ${textValue.weight}, Рост: ${textValue.size}`
+            )
         } catch (error) {
             console.error('Ошибка сохранения данных:', error)
         }

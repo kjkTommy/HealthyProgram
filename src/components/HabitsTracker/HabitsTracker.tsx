@@ -1,38 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { StyleSheet, Text, View, TouchableWithoutFeedback } from 'react-native'
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6'
 import Ionicons from '@expo/vector-icons/Ionicons'
-import { DayOfTheWeekProps } from '../../types'
+import { ScrollView } from 'react-native-gesture-handler'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { updateDaysArray } from '../../utils/updateDaysArray'
 import ProgressBar from '../ProgressBar/ProgressBar'
 import ModalHabits from '../ModalHabits/ModalHabits'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { DayOfTheWeekProps } from '../../types'
 import { conversionDateToNumber } from '../../utils/conversionDateToNumber'
 
 const STORAGE_KEY = 'HABIT_NAME'
 const STORAGE_KEY_DATE = 'HABIT_DATE'
 
-const daysOfTheWeek: DayOfTheWeekProps[] = [
-    { name: 'Пн', id: 1, isCompleted: false },
-    { name: 'Вт', id: 2, isCompleted: false },
-    { name: 'Ср', id: 3, isCompleted: false },
-    { name: 'Чт', id: 4, isCompleted: false },
-    { name: 'Пт', id: 5, isCompleted: false },
-    { name: 'Сб', id: 6, isCompleted: false },
-    { name: 'Вс', id: 7, isCompleted: false },
-]
-
 const HabitsTracker = () => {
     const [habitName, setHabitName] = useState<string>('')
     const [date, setDate] = useState<Date>(new Date())
-    const [weekDays, setWeekDays] = useState(daysOfTheWeek)
+    const [weekDays, setWeekDays] = useState<DayOfTheWeekProps[][]>([])
     const [open, setOpen] = useState(false)
-
-    function counterCompleteDay(days: DayOfTheWeekProps[]) {
-        return days.filter((day) => day.isCompleted).length
-    }
-
-    const completedDays = counterCompleteDay(weekDays)
-    const totalDate = conversionDateToNumber(date)
 
     useEffect(() => {
         const loadData = async () => {
@@ -50,6 +35,13 @@ const HabitsTracker = () => {
         loadData()
     }, [])
 
+    const totalDate = conversionDateToNumber(date)
+
+    useEffect(() => {
+        const daysArray = updateDaysArray(totalDate)
+        setWeekDays(daysArray)
+    }, [totalDate])
+
     const handleSaveHabit = useCallback(async () => {
         try {
             await AsyncStorage.multiSet([
@@ -64,21 +56,26 @@ const HabitsTracker = () => {
 
     const handleChangeStatus = (id: number) => {
         setWeekDays((prevDays) =>
-            prevDays.map((day) =>
-                day.id === id ? { ...day, isCompleted: !day.isCompleted } : day
+            prevDays.map((weekDayArray) =>
+                weekDayArray.map((day) =>
+                    day.id === id
+                        ? { ...day, isCompleted: !day.isCompleted }
+                        : day
+                )
             )
         )
     }
+
+    const completedDays = weekDays
+        .flat()
+        .filter((day) => day.isCompleted).length
 
     return (
         <View style={styles.mainContainer}>
             <TouchableWithoutFeedback onPress={() => setOpen(true)}>
                 <View style={styles.containerHabit}>
-                    <FontAwesome5 name="plus" size={40} color="white" />
-                    <Text style={{ color: '#FFFFFF', fontSize: 10 }}>
-                        выполнено {completedDays}
-                        максимум {totalDate}
-                    </Text>
+                    <FontAwesome6 name="fire" size={76} color="#FA3E6E" />
+                    <Text style={styles.habitNameText}>{habitName}</Text>
                     <ModalHabits
                         date={date}
                         setDate={setDate}
@@ -91,50 +88,81 @@ const HabitsTracker = () => {
                 </View>
             </TouchableWithoutFeedback>
             <View style={styles.containerColumn}>
-                <View style={styles.statusHabit}>
+                <View>
                     <ProgressBar
                         totalDate={totalDate}
                         completedDays={completedDays}
                     />
+                    <Text style={styles.textUnderProgress}>
+                        {completedDays} / из {totalDate} дней
+                    </Text>
                 </View>
-                <View style={styles.weekDaysContainer}>
-                    {weekDays.map((day) => (
-                        <TouchableWithoutFeedback
-                            key={day.id}
-                            onPress={() => handleChangeStatus(day.id)}
-                        >
-                            <View style={styles.weekDaysChecker}>
-                                <Ionicons
-                                    name="checkmark-circle"
-                                    size={26}
-                                    color={
-                                        day.isCompleted ? '#FA3E6E' : '#000000'
-                                    }
-                                />
-                                <Text
-                                    style={{
-                                        color: '#FFFFFF',
-                                        fontSize: 14,
-                                        marginTop: 2,
-                                    }}
-                                >
-                                    {day.name}
-                                </Text>
+                <ScrollView horizontal={true} style={styles.scrollViewWeek}>
+                    <View style={styles.weekDaysContainer}>
+                        {weekDays.map((weekDayArray, weekIndex) => (
+                            <View
+                                key={weekIndex}
+                                style={styles.weekDaysChecker}
+                            >
+                                {weekDayArray.map((day) => (
+                                    <TouchableWithoutFeedback
+                                        key={day.id}
+                                        onPress={() =>
+                                            handleChangeStatus(day.id)
+                                        }
+                                    >
+                                        <View>
+                                            <Ionicons
+                                                name="checkmark-circle"
+                                                size={26}
+                                                color={
+                                                    day.isCompleted
+                                                        ? '#FA3E6E'
+                                                        : '#000000'
+                                                }
+                                            />
+                                            <Text
+                                                style={{
+                                                    color: '#FFFFFF',
+                                                    fontSize: 14,
+                                                    marginTop: 2,
+                                                }}
+                                            >
+                                                {day.name}
+                                            </Text>
+                                        </View>
+                                    </TouchableWithoutFeedback>
+                                ))}
                             </View>
-                        </TouchableWithoutFeedback>
-                    ))}
-                </View>
+                        ))}
+                    </View>
+                </ScrollView>
             </View>
         </View>
     )
 }
 
 const styles = StyleSheet.create({
+    scrollViewWeek: {
+        width: 240,
+    },
+    habitNameText: {
+        textAlign: 'center',
+        fontWeight: '600',
+        color: '#FFFFFF',
+        fontSize: 20,
+    },
+    textUnderProgress: {
+        fontSize: 18,
+        color: '#FFFFFF',
+        marginBottom: 8,
+        paddingLeft: 2,
+    },
     weekDaysChecker: {
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 8,
     },
     mainContainer: {
         width: '94%',
@@ -147,9 +175,8 @@ const styles = StyleSheet.create({
         marginTop: 30,
         gap: 8,
     },
-    statusHabit: {},
     containerHabit: {
-        width: '28%',
+        width: '32%',
         backgroundColor: '#171414',
         display: 'flex',
         flexDirection: 'column',
@@ -171,7 +198,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         display: 'flex',
         flexDirection: 'row',
-        gap: 10,
+        gap: 8,
     },
 })
 
